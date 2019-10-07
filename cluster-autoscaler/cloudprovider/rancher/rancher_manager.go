@@ -3,6 +3,7 @@ package rancher
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/golang/glog"
 
@@ -12,6 +13,11 @@ import (
 
 	"k8s.io/api/core/v1"
 	"k8s.io/autoscaler/cluster-autoscaler/cloudprovider"
+)
+
+const (
+	nodeDeletionVerifierRetryLimit = 10
+	nodeDeletionVerifierRetryDelay = 5 * time.Second
 )
 
 type Config struct {
@@ -193,7 +199,28 @@ func (m *RancherManager) DeleteNode(nodePoolId string, node *v1.Node) error {
 		return err
 	}
 
-	return nil
+	// cluster autoscaler specifies that we should wait until the node disappears from the underlying infrastructure
+	// before proceeding so we'll park here for a while
+	for retry := 0; retry < nodeDeletionVerifierRetryLimit; retry++ {
+		time.Sleep(nodeDeletionVerifierRetryDelay)
+
+		_, err := m.nodes.ByID(rancherNode.ID)
+		if err == nil {
+			continue
+		}
+
+		if clientbase.IsNotFound(err) {
+			// yay :)
+			return nil
+		}
+
+		glog.Warningf("unexpected error while checking node deletion (attempt %d/%d): %s",
+			retry, nodeDeletionVerifierRetryLimit, err)
+
+	}
+
+	return fmt.Errorf("unable to confirm node %s (%s) deletion for %s",
+		rancherNode.Name, rancherNode.ID, nodeDeletionVerifierRetryLimit * nodeDeletionVerifierRetryDelay)
 }
 
 func (m *RancherManager) GetCachedNodePoolNodes(id string) ([]*v3.Node, error) {
