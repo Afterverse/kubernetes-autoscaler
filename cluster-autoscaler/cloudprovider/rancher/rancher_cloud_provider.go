@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	// ProviderName is the cloud provider name for AWS
+	// ProviderName is the cloud provider name for Rancher
 	ProviderName = "rancher"
 )
 

@@ -108,7 +108,8 @@ func (ng *rancherNodeGroup) Id() string {
 // Debug returns a string containing all information regarding this node group.
 func (ng *rancherNodeGroup) Debug() string {
 	nodePool := ng.nodePool()
-	return fmt.Sprintf("%s - %s (%d:%d)", ng.Id(), nodePool.HostnamePrefix, ng.MinSize(), ng.MaxSize())
+	return fmt.Sprintf("%s - %s (%d:%d - actual: %d)", ng.Id(),
+		nodePool.HostnamePrefix, ng.MinSize(), ng.MaxSize(), nodePool.Quantity)
 }
 
 // Nodes returns a list of all nodes that belong to this node group.
