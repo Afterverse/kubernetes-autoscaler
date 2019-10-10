@@ -4,7 +4,7 @@ TAG?=dev
 FLAGS=
 ENVVAR=
 GOOS?=linux
-REGISTRY?=staging-k8s.gcr.io
+REGISTRY?=027396584751.dkr.ecr.us-east-1.amazonaws.com/playkids-xd
 BASEIMAGE?=k8s.gcr.io/debian-base-amd64:v1.0.0
 
 deps:
