@@ -5,7 +5,7 @@ FLAGS=
 LDFLAGS?=-s
 ENVVAR=CGO_ENABLED=0
 GOOS?=linux
-REGISTRY?=staging-k8s.gcr.io
+REGISTRY?=027396584751.dkr.ecr.us-east-1.amazonaws.com/playkids-xd
 ifdef BUILD_TAGS
   TAGS_FLAG=--tags ${BUILD_TAGS}
   PROVIDER=-${BUILD_TAGS}
