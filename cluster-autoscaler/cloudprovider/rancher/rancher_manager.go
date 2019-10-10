@@ -1,3 +1,19 @@
+/*
+Copyright 2019 The Kubernetes Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package rancher
 
 import (
@@ -20,6 +36,7 @@ const (
 	nodeDeletionVerifierRetryDelay = 5 * time.Second
 )
 
+// Config contains configuration attributes for Rancher communication
 type Config struct {
 	URL         string
 	Token       string
@@ -27,6 +44,7 @@ type Config struct {
 	ClusterID   string
 }
 
+// Validate the configuration attributes
 func (c Config) Validate() error {
 	if c.URL == "" {
 		return fmt.Errorf("missing Rancher server URL")
@@ -43,18 +61,20 @@ func (c Config) Validate() error {
 	return nil
 }
 
+// RancherManager handler Rancher communication and data caching
 type RancherManager struct {
 	nodes     v3.NodeOperations
 	nodePools v3.NodePoolOperations
 	clusterId string
 }
 
+// BuildRancherManager builds a new Rancher Manager object to work with Rancher
 func BuildRancherManager() (*RancherManager, error) {
 	cfg := Config{
-		URL:			os.Getenv("RANCHER_URL"),
-		Token:			os.Getenv("RANCHER_TOKEN"),
-		ClusterName:	os.Getenv("RANCHER_CLUSTER_NAME"),
-		ClusterID:		os.Getenv("RANCHER_CLUSTER_ID"),
+		URL:         os.Getenv("RANCHER_URL"),
+		Token:       os.Getenv("RANCHER_TOKEN"),
+		ClusterName: os.Getenv("RANCHER_CLUSTER_NAME"),
+		ClusterID:   os.Getenv("RANCHER_CLUSTER_ID"),
 	}
 
 	err := cfg.Validate()
@@ -63,8 +83,8 @@ func BuildRancherManager() (*RancherManager, error) {
 	}
 
 	clientOpts := &clientbase.ClientOpts{
-		URL:        cfg.URL,
-		TokenKey:   cfg.Token,
+		URL:      cfg.URL,
+		TokenKey: cfg.Token,
 	}
 
 	rancherClient, err := v3.NewClient(clientOpts)
@@ -78,15 +98,13 @@ func BuildRancherManager() (*RancherManager, error) {
 	}
 
 	m := &RancherManager{
-		nodes: 		rancherClient.Node,
-		nodePools:	rancherClient.NodePool,
-		clusterId:	clusterId,
+		nodes:     rancherClient.Node,
+		nodePools: rancherClient.NodePool,
+		clusterId: clusterId,
 	}
 
 	return m, nil
 }
-
-
 
 func findCluster(client *v3.Client, config Config) (string, error) {
 	if config.ClusterID != "" {
@@ -96,26 +114,27 @@ func findCluster(client *v3.Client, config Config) (string, error) {
 		}
 
 		return config.ClusterID, nil
-	} else {
-		listOpts := &types.ListOpts{
-			Filters: map[string]interface{}{
-				v3.ClusterFieldName: config.ClusterName,
-			},
-		}
-
-		clusters, err := client.Cluster.List(listOpts)
-		if err != nil {
-			return "", fmt.Errorf("failed to find cluster %s: %s", config.ClusterName, err)
-		}
-
-		if len(clusters.Data) != 1 {
-			return "", fmt.Errorf("cluster %s not found", config.ClusterName)
-		}
-
-		return clusters.Data[0].ID, nil
 	}
+
+	listOpts := &types.ListOpts{
+		Filters: map[string]interface{}{
+			v3.ClusterFieldName: config.ClusterName,
+		},
+	}
+
+	clusters, err := client.Cluster.List(listOpts)
+	if err != nil {
+		return "", fmt.Errorf("failed to find cluster %s: %s", config.ClusterName, err)
+	}
+
+	if len(clusters.Data) != 1 {
+		return "", fmt.Errorf("cluster %s not found", config.ClusterName)
+	}
+
+	return clusters.Data[0].ID, nil
 }
 
+// GetCachedNodePools returns a (currently uncached) list of known NodeGroup objects
 func (m *RancherManager) GetCachedNodePools() ([]cloudprovider.NodeGroup, error) {
 	listOpts := &types.ListOpts{
 		Filters: map[string]interface{}{
@@ -134,7 +153,7 @@ func (m *RancherManager) GetCachedNodePools() ([]cloudprovider.NodeGroup, error)
 			if hasAutoScalingEnabled(&nodePool) {
 				nodeGroups = append(nodeGroups, &rancherNodeGroup{
 					manager: m,
-					id:		nodePool.ID,
+					id:      nodePool.ID,
 				})
 			}
 		}
@@ -143,6 +162,7 @@ func (m *RancherManager) GetCachedNodePools() ([]cloudprovider.NodeGroup, error)
 	return nodeGroups, nil
 }
 
+// GetCachedNodePool returns a (currently uncached) NodePool object given its id
 func (m *RancherManager) GetCachedNodePool(id string) (*v3.NodePool, error) {
 	np, err := m.nodePools.ByID(id)
 	if err != nil {
@@ -152,6 +172,7 @@ func (m *RancherManager) GetCachedNodePool(id string) (*v3.NodePool, error) {
 	return np, nil
 }
 
+// IncreasePoolSize increases the size of the pool identified by id by delta
 func (m *RancherManager) IncreasePoolSize(id string, delta int) error {
 	// we need a fresh node pool object instead of a cached one
 	np, err := m.nodePools.ByID(id)
@@ -173,6 +194,7 @@ func (m *RancherManager) IncreasePoolSize(id string, delta int) error {
 	return nil
 }
 
+// DeleteNodes deletes multiple nodes from the cluster
 func (m *RancherManager) DeleteNodes(nodePoolId string, nodes []*v1.Node) error {
 	for _, node := range nodes {
 		if err := m.DeleteNode(nodePoolId, node); err != nil {
@@ -183,6 +205,7 @@ func (m *RancherManager) DeleteNodes(nodePoolId string, nodes []*v1.Node) error 
 	return nil
 }
 
+// DeleteNode deletes a single node from the cluster
 func (m *RancherManager) DeleteNode(nodePoolId string, node *v1.Node) error {
 	rancherNode, err := m.GetNodeForKubernetesNode(node.Name)
 	if err != nil {
@@ -220,9 +243,10 @@ func (m *RancherManager) DeleteNode(nodePoolId string, node *v1.Node) error {
 	}
 
 	return fmt.Errorf("unable to confirm node %s (%s) deletion for %s",
-		rancherNode.Name, rancherNode.ID, nodeDeletionVerifierRetryLimit * nodeDeletionVerifierRetryDelay)
+		rancherNode.Name, rancherNode.ID, nodeDeletionVerifierRetryLimit*nodeDeletionVerifierRetryDelay)
 }
 
+// GetCachedNodePoolNodes returns a (currently uncached) list of Nodes belonging to a NodePool
 func (m *RancherManager) GetCachedNodePoolNodes(id string) ([]*v3.Node, error) {
 	listOpts := &types.ListOpts{
 		Filters: map[string]interface{}{
@@ -245,15 +269,17 @@ func (m *RancherManager) GetCachedNodePoolNodes(id string) ([]*v3.Node, error) {
 	return nodePoolNodes, nil
 }
 
+// GetCachedNodeForKubernetesNode returns a (currently uncached) Node object from Rancher given its Kubernetes' name
 func (m *RancherManager) GetCachedNodeForKubernetesNode(name string) (*v3.Node, error) {
 	return m.GetNodeForKubernetesNode(name)
 }
 
+// GetNodeForKubernetesNode returns a Node object from Rancher given its Kubernetes' name
 func (m *RancherManager) GetNodeForKubernetesNode(nodeName string) (*v3.Node, error) {
 	listOpts := &types.ListOpts{
 		Filters: map[string]interface{}{
 			v3.NodeFieldClusterID: m.clusterId,
-			v3.NodeFieldNodeName: nodeName,
+			v3.NodeFieldNodeName:  nodeName,
 		},
 	}
 
@@ -269,10 +295,12 @@ func (m *RancherManager) GetNodeForKubernetesNode(nodeName string) (*v3.Node, er
 	return &nodes.Data[0], nil
 }
 
+// Cleanup disposes of resources (such as goroutines, once we have caching)
 func (m *RancherManager) Cleanup() error {
 	return nil
 }
 
+// Refresh invalidates the caches (once we have them)
 func (m *RancherManager) Refresh() error {
 	return nil
 }

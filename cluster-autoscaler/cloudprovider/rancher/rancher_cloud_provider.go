@@ -1,3 +1,19 @@
+/*
+Copyright 2019 The Kubernetes Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package rancher
 
 import (
@@ -14,13 +30,14 @@ const (
 	ProviderName = "rancher"
 )
 
-type rancherCloudProvider struct {
-	manager			*RancherManager
-	resourceLimiter	*cloudprovider.ResourceLimiter
-}
-
 // CloudProvider contains configuration info and functions for interacting with
 // cloud provider (GCE, AWS, etc).
+type rancherCloudProvider struct {
+	manager         *RancherManager
+	resourceLimiter *cloudprovider.ResourceLimiter
+}
+
+// BuildRancherCloudProvider creates new rancherCloudProvider
 func BuildRancherCloudProvider(manager *RancherManager, resourceLimiter *cloudprovider.ResourceLimiter) (cloudprovider.CloudProvider, error) {
 	rancher := &rancherCloudProvider{
 		manager:         manager,
@@ -61,7 +78,7 @@ func (cp *rancherCloudProvider) NodeGroupForNode(node *v1.Node) (cloudprovider.N
 
 	return &rancherNodeGroup{
 		manager: cp.manager,
-		id:	rancherNode.NodePoolID,
+		id:      rancherNode.NodePoolID,
 	}, nil
 }
 
