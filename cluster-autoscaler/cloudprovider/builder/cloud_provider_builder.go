@@ -18,6 +18,7 @@ package builder
 
 import (
 	"io"
+	"k8s.io/autoscaler/cluster-autoscaler/cloudprovider/rancher"
 	"os"
 
 	"k8s.io/autoscaler/cluster-autoscaler/cloudprovider"
@@ -44,10 +45,11 @@ var AvailableCloudProviders = []string{
 	gce.ProviderNameGCE,
 	gke.ProviderNameGKE,
 	kubemark.ProviderName,
+	rancher.ProviderName,
 }
 
-// DefaultCloudProvider is GCE.
-const DefaultCloudProvider = gce.ProviderNameGCE
+// DefaultCloudProvider is Rancher.
+const DefaultCloudProvider = rancher.ProviderName
 
 // NewCloudProvider builds a cloud provider from provided parameters.
 func NewCloudProvider(opts config.AutoscalingOptions) cloudprovider.CloudProvider {
@@ -76,6 +78,8 @@ func NewCloudProvider(opts config.AutoscalingOptions) cloudprovider.CloudProvide
 		return buildAzure(opts, do, rl)
 	case kubemark.ProviderName:
 		return buildKubemark(opts, do, rl)
+	case rancher.ProviderName:
+		return buildRancher(opts, do, rl)
 	case "":
 		// Ideally this would be an error, but several unit tests of the
 		// StaticAutoscaler depend on this behaviour.
@@ -216,6 +220,18 @@ func buildKubemark(opts config.AutoscalingOptions, do cloudprovider.NodeGroupDis
 	provider, err := kubemark.BuildKubemarkCloudProvider(kubemarkController, do.NodeGroupSpecs, rl)
 	if err != nil {
 		glog.Fatalf("Failed to create Kubemark cloud provider: %v", err)
+	}
+	return provider
+}
+
+func buildRancher(opts config.AutoscalingOptions, do cloudprovider.NodeGroupDiscoveryOptions, rl *cloudprovider.ResourceLimiter) cloudprovider.CloudProvider {
+	manager, err := rancher.BuildRancherManager()
+	if err != nil {
+		glog.Fatalf("Failed to create Rancher Manager: %v", err)
+	}
+	provider, err := rancher.BuildRancherCloudProvider(manager, rl)
+	if err != nil {
+		glog.Fatalf("Failed to create Rancher cloud provider: %v", err)
 	}
 	return provider
 }
