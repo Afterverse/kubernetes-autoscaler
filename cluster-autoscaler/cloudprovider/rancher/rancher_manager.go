@@ -65,6 +65,9 @@ type RancherManager struct {
 	nodes     v3.NodeOperations
 	nodePools v3.NodePoolOperations
 	clusterId string
+
+	nodeCacheByNodeName map[string]*v3.Node
+	nodePoolCacheByID   map[string]*v3.NodePool
 }
 
 // BuildRancherManager builds a new Rancher Manager object to work with Rancher
@@ -133,39 +136,27 @@ func findCluster(client *v3.Client, config Config) (string, error) {
 	return clusters.Data[0].ID, nil
 }
 
-// GetCachedNodePools returns a (currently uncached) list of known NodeGroup objects
-func (m *RancherManager) GetCachedNodePools() ([]cloudprovider.NodeGroup, error) {
-	listOpts := &types.ListOpts{
-		Filters: map[string]interface{}{
-			v3.NodePoolFieldClusterID: m.clusterId,
-		},
-	}
-
+// GetCachedNodeGroups returns a list of known NodeGroup objects
+func (m *RancherManager) GetCachedNodeGroups() ([]cloudprovider.NodeGroup, error) {
 	nodeGroups := make([]cloudprovider.NodeGroup, 0)
 
-	for nodePools, err := m.nodePools.List(listOpts); nodePools != nil || err != nil; nodePools, err = nodePools.Next() {
-		if err != nil {
-			return nil, err
-		}
-
-		for _, nodePool := range nodePools.Data {
-			if hasAutoScalingEnabled(&nodePool) {
-				nodeGroups = append(nodeGroups, &rancherNodeGroup{
-					manager: m,
-					id:      nodePool.ID,
-				})
-			}
+	for _, nodePool := range m.nodePoolCacheByID {
+		if hasAutoScalingEnabled(nodePool) {
+			nodeGroups = append(nodeGroups, &rancherNodeGroup{
+				manager: m,
+				id:      nodePool.ID,
+			})
 		}
 	}
 
 	return nodeGroups, nil
 }
 
-// GetCachedNodePool returns a (currently uncached) NodePool object given its id
+// GetCachedNodePool returns a NodePool object given its id
 func (m *RancherManager) GetCachedNodePool(id string) (*v3.NodePool, error) {
-	np, err := m.nodePools.ByID(id)
-	if err != nil {
-		return nil, err
+	np, exists := m.nodePoolCacheByID[id]
+	if !exists {
+		return nil, fmt.Errorf("node pool %s not found", id)
 	}
 
 	return np, nil
@@ -182,8 +173,9 @@ func (m *RancherManager) IncreasePoolSize(id string, delta int) error {
 	targetQuantity := np.Quantity + int64(delta)
 	klog.Infof("Increasing %s capacity from %d to %d", np.HostnamePrefix, np.Quantity, targetQuantity)
 
-	update := make(map[string]interface{})
-	update[v3.NodePoolFieldQuantity] = targetQuantity
+	update := map[string]interface{}{
+		v3.NodePoolFieldQuantity: targetQuantity,
+	}
 
 	_, err = m.nodePools.Update(np, update)
 	if err != nil {
@@ -245,32 +237,27 @@ func (m *RancherManager) DeleteNode(nodePoolId string, node *v1.Node) error {
 		rancherNode.Name, rancherNode.ID, nodeDeletionVerifierRetryLimit*nodeDeletionVerifierRetryDelay)
 }
 
-// GetCachedNodePoolNodes returns a (currently uncached) list of Nodes belonging to a NodePool
+// GetCachedNodePoolNodes returns a list of Nodes belonging to a NodePool
 func (m *RancherManager) GetCachedNodePoolNodes(id string) ([]*v3.Node, error) {
-	listOpts := &types.ListOpts{
-		Filters: map[string]interface{}{
-			v3.NodeFieldNodePoolID: id,
-		},
-	}
-
 	nodePoolNodes := make([]*v3.Node, 0)
 
-	for nodes, err := m.nodes.List(listOpts); nodes != nil || err != nil; nodes, err = nodes.Next() {
-		if err != nil {
-			return nil, err
-		}
-
-		for _, node := range nodes.Data {
-			nodePoolNodes = append(nodePoolNodes, &node)
+	for _, node := range m.nodeCacheByNodeName {
+		if node.NodePoolID == id {
+			nodePoolNodes = append(nodePoolNodes, node)
 		}
 	}
 
 	return nodePoolNodes, nil
 }
 
-// GetCachedNodeForKubernetesNode returns a (currently uncached) Node object from Rancher given its Kubernetes' name
+// GetCachedNodeForKubernetesNode returns a Node object from Rancher given its Kubernetes' name
 func (m *RancherManager) GetCachedNodeForKubernetesNode(name string) (*v3.Node, error) {
-	return m.GetNodeForKubernetesNode(name)
+	node, exists := m.nodeCacheByNodeName[name]
+	if !exists {
+		return nil, fmt.Errorf("node  %s not found", name)
+	}
+
+	return node, nil
 }
 
 // GetNodeForKubernetesNode returns a Node object from Rancher given its Kubernetes' name
@@ -294,16 +281,82 @@ func (m *RancherManager) GetNodeForKubernetesNode(nodeName string) (*v3.Node, er
 	return &nodes.Data[0], nil
 }
 
-// Cleanup disposes of resources (such as goroutines, once we have caching)
+// Cleanup disposes of resources (such as goroutines)
 func (m *RancherManager) Cleanup() error {
 	return nil
 }
 
-// Refresh invalidates the caches (once we have them)
+// Refresh invalidates the caches
 func (m *RancherManager) Refresh() error {
+	start := time.Now()
+	klog.Infof("Refreshing Rancher caches")
+
+	nodePools, err := m.fetchAllNodePoolsByID()
+	if err != nil {
+		return fmt.Errorf("failed to refresh node pool cache: %s", err)
+	}
+
+	nodesByNodeName, err := m.fetchAllNodesByNodeName()
+	if err != nil {
+		return fmt.Errorf("failed to refresh node cache: %s", err)
+	}
+
+	m.nodePoolCacheByID = nodePools
+	m.nodeCacheByNodeName = nodesByNodeName
+
+	elapsed := time.Since(start)
+	klog.Infof("Refresh completed in %s. There are currently %d node pools and %d nodes.",
+		elapsed, len(m.nodePoolCacheByID), len(m.nodeCacheByNodeName))
+
 	return nil
 }
 
 func hasAutoScalingEnabled(nodePool *v3.NodePool) bool {
 	return nodePool.Annotations[autoScalingEnabledAnnotation] == "true"
+}
+
+// caching stuff
+
+func (m *RancherManager) fetchAllNodePoolsByID() (map[string]*v3.NodePool, error) {
+	listOpts := &types.ListOpts{
+		Filters: map[string]interface{}{
+			v3.NodePoolFieldClusterID: m.clusterId,
+		},
+	}
+
+	byID := map[string]*v3.NodePool{}
+
+	for nodePools, err := m.nodePools.List(listOpts); nodePools != nil || err != nil; nodePools, err = nodePools.Next() {
+		if err != nil {
+			return nil, err
+		}
+
+		for i := range nodePools.Data {
+			byID[nodePools.Data[i].ID] = &nodePools.Data[i]
+		}
+	}
+
+	return byID, nil
+}
+
+func (m *RancherManager) fetchAllNodesByNodeName() (map[string]*v3.Node, error) {
+	listOpts := &types.ListOpts{
+		Filters: map[string]interface{}{
+			v3.NodeFieldClusterID: m.clusterId,
+		},
+	}
+
+	byNodeName := map[string]*v3.Node{}
+
+	for nodes, err := m.nodes.List(listOpts); nodes != nil || err != nil; nodes, err = nodes.Next() {
+		if err != nil {
+			return nil, err
+		}
+
+		for i := range nodes.Data {
+			byNodeName[nodes.Data[i].NodeName] = &nodes.Data[i]
+		}
+	}
+
+	return byNodeName, nil
 }
