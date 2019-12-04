@@ -69,13 +69,13 @@ func (cp *rancherCloudProvider) Name() string {
 
 // NodeGroups returns all node groups configured for this cloud provider.
 func (cp *rancherCloudProvider) NodeGroups() []cloudprovider.NodeGroup {
-	nps, err := cp.manager.GetCachedNodePools()
+	ngs, err := cp.manager.GetCachedNodeGroups()
 	if err != nil {
 		klog.Errorf("failed to get node pools: %s", err)
 		return nil
 	}
 
-	return nps
+	return ngs
 }
 
 // NodeGroupForNode returns the node group for the given node, nil if the node
