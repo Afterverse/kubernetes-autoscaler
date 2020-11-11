@@ -172,9 +172,9 @@ set +o errexit
   done
   set -o pipefail
 
-  if [[ "${IMPLICIT_FOUND}" == "true" ]]; then
-    err_rerun "Implicit dependencies missing from go.mod-extra"
-  fi
+  # if [[ "${IMPLICIT_FOUND}" == "true" ]]; then
+  #   err_rerun "Implicit dependencies missing from go.mod-extra"
+  # fi
 
   echo "Running go mod vendor"
   go mod vendor
