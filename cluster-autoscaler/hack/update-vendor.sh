@@ -239,12 +239,12 @@ set +o errexit
   fi
 
   echo "Operation finished successfully"
-  if [[ "$(basename "${WORK_DIR}" | cut -d '.' -f 1)" == "ca-update-vendor" ]];then
-    echo "Deleting working directory ${WORK_DIR}"
-    rm -rf ${WORK_DIR}
-  else
-    echo "Preserving working directory ${WORK_DIR}"
-  fi
+  # if [[ "$(basename "${WORK_DIR}" | cut -d '.' -f 1)" == "ca-update-vendor" ]];then
+  #   echo "Deleting working directory ${WORK_DIR}"
+  #   rm -rf ${WORK_DIR}
+  # else
+  #   echo "Preserving working directory ${WORK_DIR}"
+  # fi
 )
 
 # Catch
