@@ -54,7 +54,7 @@ func (c Config) Validate() error {
 	}
 
 	if c.ClusterName == "" && c.ClusterID == "" {
-		return fmt.Errorf("missing Rancher cluster ID")
+		return fmt.Errorf("missing Rancher cluster ID or name")
 	}
 
 	return nil
@@ -234,7 +234,7 @@ func (m *RancherManager) DeleteNode(nodePoolId string, node *v1.Node) error {
 	}
 
 	return fmt.Errorf("unable to confirm node %s (%s) deletion for %s",
-		rancherNode.Name, rancherNode.ID, nodeDeletionVerifierRetryLimit*nodeDeletionVerifierRetryDelay)
+		rancherNode.ID, rancherNode.Name, nodeDeletionVerifierRetryLimit*nodeDeletionVerifierRetryDelay)
 }
 
 // GetCachedNodePoolNodes returns a list of Nodes belonging to a NodePool
@@ -254,7 +254,7 @@ func (m *RancherManager) GetCachedNodePoolNodes(id string) ([]*v3.Node, error) {
 func (m *RancherManager) GetCachedNodeForKubernetesNode(name string) (*v3.Node, error) {
 	node, exists := m.nodeCacheByNodeName[name]
 	if !exists {
-		return nil, fmt.Errorf("node  %s not found", name)
+		return nil, fmt.Errorf("node %s not found", name)
 	}
 
 	return node, nil
