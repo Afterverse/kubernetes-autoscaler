@@ -172,9 +172,9 @@ set +o errexit
   done
   set -o pipefail
 
-  if [[ "${IMPLICIT_FOUND}" == "true" ]]; then
-    err_rerun "Implicit dependencies missing from go.mod-extra"
-  fi
+  # if [[ "${IMPLICIT_FOUND}" == "true" ]]; then
+  #   err_rerun "Implicit dependencies missing from go.mod-extra"
+  # fi
 
   echo "Running go mod vendor"
   go mod vendor
@@ -200,12 +200,12 @@ set +o errexit
   fi
 
   echo "Operation finished successfully"
-  if [[ "$(basename "${WORK_DIR}" | cut -d '.' -f 1)" == "ca-update-vendor" ]];then
-    echo "Deleting working directory ${WORK_DIR}"
-    rm -rf ${WORK_DIR}
-  else
-    echo "Preserving working directory ${WORK_DIR}"
-  fi
+  # if [[ "$(basename "${WORK_DIR}" | cut -d '.' -f 1)" == "ca-update-vendor" ]];then
+  #   echo "Deleting working directory ${WORK_DIR}"
+  #   rm -rf ${WORK_DIR}
+  # else
+  #   echo "Preserving working directory ${WORK_DIR}"
+  # fi
 )
 
 # Catch

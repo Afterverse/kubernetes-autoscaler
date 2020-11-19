@@ -13,22 +13,24 @@ require (
 	github.com/Azure/go-autorest/autorest/adal v0.5.0
 	github.com/Azure/go-autorest/autorest/to v0.2.0
 	github.com/aws/aws-sdk-go v1.28.14
-	github.com/ghodss/yaml v0.0.0-20180820084758-c7ce16629ff4
+	github.com/ghodss/yaml v1.0.0
 	github.com/google/go-querystring v1.0.0
 	github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af
 	github.com/json-iterator/go v1.1.7
-	github.com/prometheus/client_golang v0.9.2
+	github.com/prometheus/client_golang v1.4.0
+	github.com/rancher/norman v0.0.0-20200930000340-693d65aaffe3
+	github.com/rancher/rancher/pkg/client v0.0.0-20201031000921-476b3565f5b3
 	github.com/satori/go.uuid v1.2.0
 	github.com/spf13/pflag v1.0.5
-	github.com/stretchr/testify v1.3.0
+	github.com/stretchr/testify v1.5.1
 	golang.org/x/crypto v0.0.0-20200220183623-bac4c82f6975
 	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
 	google.golang.org/api v0.6.1-0.20190607001116-5213b8090861
 	gopkg.in/gcfg.v1 v1.2.0
-	gopkg.in/yaml.v2 v2.2.8
-	k8s.io/api v0.0.0
-	k8s.io/apimachinery v0.0.0
-	k8s.io/client-go v0.0.0
+	gopkg.in/yaml.v2 v2.3.0
+	k8s.io/api v0.18.8
+	k8s.io/apimachinery v0.18.8
+	k8s.io/client-go v0.18.8
 	k8s.io/cloud-provider v0.0.0
 	k8s.io/component-base v0.0.0
 	k8s.io/klog v1.0.0
@@ -419,5 +421,9 @@ replace (
 )
 
 replace github.com/rancher/go-rancher => github.com/rancher/go-rancher v0.1.0
+
+replace github.com/rancher/norman => github.com/rancher/norman v0.0.0-20200930000340-693d65aaffe3
+
+replace github.com/rancher/rancher/pkg/client => github.com/PlayKids/rancher/pkg/client v0.0.0-20201031000921-476b3565f5b3
 
 replace k8s.io/kubernetes => /tmp/ca-update-vendor.7SA1/kubernetes

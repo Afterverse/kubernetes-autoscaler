@@ -4,7 +4,10 @@ go 1.12
 require (
   github.com/rancher/go-rancher v0.1.0
   github.com/aws/aws-sdk-go v1.28.14
+  github.com/rancher/norman v0.0.0-20200930000340-693d65aaffe3
+  github.com/rancher/rancher/pkg/client v0.0.0-20201031000921-476b3565f5b3
 )
 
 replace (
+  github.com/rancher/rancher/pkg/client => github.com/PlayKids/rancher/pkg/client v0.0.0-20201031000921-476b3565f5b3
 )
