@@ -115,7 +115,8 @@ func (ng *rancherNodeGroup) DeleteNodes(nodes []*v1.Node) error {
 // It is assumed that cloud provider will not delete the existing nodes when there
 // is an option to just decrease the target. Implementation required.
 func (ng *rancherNodeGroup) DecreaseTargetSize(delta int) error {
-	return fmt.Errorf("sry but I won't decrease the target size ¯\\_(ツ)_/¯")
+	//return fmt.Errorf("sry but I won't decrease the target size ¯\\_(ツ)_/¯")
+	panic("sry but I won't decrease the target size ¯\\_(ツ)_/¯")
 }
 
 // Id returns an unique identifier of the node group.
