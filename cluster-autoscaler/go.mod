@@ -22,6 +22,8 @@ require (
 	github.com/jmespath/go-jmespath v0.4.0
 	github.com/json-iterator/go v1.1.10
 	github.com/pkg/errors v0.9.1
+	github.com/rancher/norman v0.0.0-20210225010917-c7fd1e24145b
+	github.com/rancher/rancher/pkg/client v0.0.0-20210826004905-903c574c8351
 	github.com/satori/go.uuid v1.2.0
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.6.1
@@ -29,11 +31,11 @@ require (
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
 	google.golang.org/api v0.20.0
 	gopkg.in/gcfg.v1 v1.2.0
-	gopkg.in/yaml.v2 v2.2.8
-	k8s.io/api v0.0.0
-	k8s.io/apimachinery v0.0.0
+	gopkg.in/yaml.v2 v2.3.0
+	k8s.io/api v0.18.8
+	k8s.io/apimachinery v0.18.8
 	k8s.io/apiserver v0.0.0
-	k8s.io/client-go v0.0.0
+	k8s.io/client-go v0.18.8
 	k8s.io/cloud-provider v0.0.0
 	k8s.io/component-base v0.0.0
 	k8s.io/component-helpers v0.0.0
@@ -439,5 +441,9 @@ replace (
 replace github.com/digitalocean/godo => github.com/digitalocean/godo v1.27.0
 
 replace github.com/rancher/go-rancher => github.com/rancher/go-rancher v0.1.0
+
+replace github.com/rancher/norman => github.com/rancher/norman v0.0.0-20210225010917-c7fd1e24145b
+
+replace github.com/rancher/rancher/pkg/client => github.com/PlayKids/rancher/pkg/client v0.0.0-20210826004905-903c574c8351
 
 replace k8s.io/kubernetes => /tmp/ca-update-vendor.NGE2/kubernetes
