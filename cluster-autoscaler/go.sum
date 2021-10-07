@@ -44,8 +44,6 @@ github.com/Microsoft/hcsshim v0.8.10-0.20200715222032-5eafd1556990 h1:1xpVY4dSUS
 github.com/Microsoft/hcsshim v0.8.10-0.20200715222032-5eafd1556990/go.mod h1:ay/0dTb7NsG8QMDfsRfLHgZo/6xAJShLe1+ePPflihk=
 github.com/NYTimes/gziphandler v0.0.0-20170623195520-56545f4a5d46 h1:lsxEuwrXEAokXB9qhlbKWPpo3KMLZQ5WB5WLQRW1uq0=
 github.com/NYTimes/gziphandler v0.0.0-20170623195520-56545f4a5d46/go.mod h1:3wb06e3pkSAbeQ52E9H9iFoQsEEwGN64994WTCIhntQ=
-github.com/PlayKids/rancher/pkg/client v0.0.0-20210826004905-903c574c8351 h1:oV3d2G/WCSIv8xk/UpYo54GJcwpkz2vQWwk7DHtogLg=
-github.com/PlayKids/rancher/pkg/client v0.0.0-20210826004905-903c574c8351/go.mod h1:iUy4JIYYA0BBQ7nFxueLJYDCYg7Hhoo+VY5t9HQXmlc=
 github.com/PuerkitoBio/goquery v1.5.0/go.mod h1:qD2PgZ9lccMbQlc7eEOjaeRlFQON7xY8kdmcsrnKqMg=
 github.com/PuerkitoBio/purell v1.1.1 h1:WEQqlqaGbrPkxLJWfBwQmfEAE1Z7ONdDLqrN38tNFfI=
 github.com/PuerkitoBio/purell v1.1.1/go.mod h1:c11w/QuzBsJSee3cPx9rAFu61PvFxuPbtSwDGJws/X0=
@@ -409,8 +407,10 @@ github.com/qri-io/starlib v0.4.2-0.20200213133954-ff2e8cd5ef8d/go.mod h1:7DPO4do
 github.com/quobyte/api v0.1.8 h1:+sOX1gIlC/OaLipqVZWrHgly9Kh9Qo8OygeS0mWAg30=
 github.com/quobyte/api v0.1.8/go.mod h1:jL7lIHrmqQ7yh05OJ+eEEdHr0u/kmT1Ff9iHd+4H6VI=
 github.com/rancher/lasso v0.0.0-20200820172840-0e4cc0ef5cb0/go.mod h1:OhBBBO1pBwYp0hacWdnvSGOj+XE9yMLOLnaypIlic18=
-github.com/rancher/norman v0.0.0-20210225010917-c7fd1e24145b h1:4SV/mEqaGmwvAV5XIO+hRqacZR1KyW6sTqzFNIlyTAY=
-github.com/rancher/norman v0.0.0-20210225010917-c7fd1e24145b/go.mod h1:hhnf77V2lmZD7cvUqi4vTBpIs3KpHNL/AmuN0MqEClI=
+github.com/rancher/norman v0.0.0-20210608202517-59b3523c3133 h1:X1Tn2q3iDekvqajJCbY2QYkEUJ51rJC9BuxS3os6nX4=
+github.com/rancher/norman v0.0.0-20210608202517-59b3523c3133/go.mod h1:hhnf77V2lmZD7cvUqi4vTBpIs3KpHNL/AmuN0MqEClI=
+github.com/rancher/rancher/pkg/client v0.0.0-20210830223634-df2432ad895c h1:UI4rTxVT+sDcTiujSjjnhEjo3ejXnAcB3YkJVIhDI8M=
+github.com/rancher/rancher/pkg/client v0.0.0-20210830223634-df2432ad895c/go.mod h1:UKAFuyRUIHtnss0+u3/21KZzsD4F/1IaHCBazsHKaww=
 github.com/rancher/wrangler v0.6.2-0.20200820173016-2068de651106 h1:ed0NTDvIwulez4zVvBZ1U7mFe2PBxtHvJ9bn2l9bcZ8=
 github.com/rancher/wrangler v0.6.2-0.20200820173016-2068de651106/go.mod h1:iKqQcYs4YSDjsme52OZtQU4jHPmLlIiM93aj2c8c/W8=
 github.com/remyoudompheng/bigfft v0.0.0-20170806203942-52369c62f446/go.mod h1:uYEyJGbgTkfkS4+E/PavXkNJcbFIpEtjt2B0KDQ5+9M=
