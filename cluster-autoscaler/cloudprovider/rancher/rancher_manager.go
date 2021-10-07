@@ -207,8 +207,8 @@ func (m *RancherManager) DeleteNode(nodePoolId string, node *v1.Node) error {
 		return fmt.Errorf("node %s not found", node.Name)
 	}
 
-	klog.Infof("Marking node %s (%s) for deletion", rancherNode.ID, rancherNode.NodeName)
-	err = m.nodes.ActionPleaseKillMe(rancherNode)
+	klog.Infof("Scaling down node %s (%s)", rancherNode.ID, rancherNode.NodeName)
+	err = m.nodes.ActionScaledown(rancherNode)
 	if err != nil {
 		return err
 	}
