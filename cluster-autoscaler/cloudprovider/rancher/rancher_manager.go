@@ -66,7 +66,9 @@ type RancherManager struct {
 	nodePools v3.NodePoolOperations
 	clusterId string
 
+	nodeCache           []*v3.Node
 	nodeCacheByNodeName map[string]*v3.Node
+	nodeCacheByNodeID   map[string]*v3.Node
 	nodePoolCacheByID   map[string]*v3.NodePool
 }
 
@@ -241,7 +243,7 @@ func (m *RancherManager) DeleteNode(nodePoolId string, node *v1.Node) error {
 func (m *RancherManager) GetCachedNodePoolNodes(id string) ([]*v3.Node, error) {
 	nodePoolNodes := make([]*v3.Node, 0)
 
-	for _, node := range m.nodeCacheByNodeName {
+	for _, node := range m.nodeCache {
 		if node.NodePoolID == id {
 			nodePoolNodes = append(nodePoolNodes, node)
 		}
@@ -250,11 +252,14 @@ func (m *RancherManager) GetCachedNodePoolNodes(id string) ([]*v3.Node, error) {
 	return nodePoolNodes, nil
 }
 
-// GetCachedNodeForKubernetesNode returns a Node object from Rancher given its Kubernetes' name
+// GetCachedNodeForKubernetesNode returns a Node object from Rancher given its Kubernetes' name or ID
 func (m *RancherManager) GetCachedNodeForKubernetesNode(name string) (*v3.Node, error) {
 	node, exists := m.nodeCacheByNodeName[name]
 	if !exists {
-		return nil, fmt.Errorf("node %s not found", name)
+		node, exists = m.nodeCacheByNodeID[name]
+		if !exists {
+			return nil, fmt.Errorf("node %s not found", name)
+		}
 	}
 
 	return node, nil
@@ -296,17 +301,22 @@ func (m *RancherManager) Refresh() error {
 		return fmt.Errorf("failed to refresh node pool cache: %s", err)
 	}
 
-	nodesByNodeName, err := m.fetchAllNodesByNodeName()
+	allNodes, err := m.fetchAllNodes()
 	if err != nil {
 		return fmt.Errorf("failed to refresh node cache: %s", err)
 	}
 
-	m.nodePoolCacheByID = nodePools
+	nodesByNodeName := filterAllNodesByNodeName(allNodes)
+	nodesByNodeID := filterAllNodesByNodeID(allNodes)
+
+	m.nodeCache = allNodes
 	m.nodeCacheByNodeName = nodesByNodeName
+	m.nodeCacheByNodeID = nodesByNodeID
+	m.nodePoolCacheByID = nodePools
 
 	elapsed := time.Since(start)
 	klog.Infof("Refresh completed in %s. There are currently %d node pools and %d nodes.",
-		elapsed, len(m.nodePoolCacheByID), len(m.nodeCacheByNodeName))
+		elapsed, len(m.nodePoolCacheByID), len(m.nodeCache))
 
 	return nil
 }
@@ -339,14 +349,14 @@ func (m *RancherManager) fetchAllNodePoolsByID() (map[string]*v3.NodePool, error
 	return byID, nil
 }
 
-func (m *RancherManager) fetchAllNodesByNodeName() (map[string]*v3.Node, error) {
+func (m *RancherManager) fetchAllNodes() ([]*v3.Node, error) {
 	listOpts := &types.ListOpts{
 		Filters: map[string]interface{}{
 			v3.NodeFieldClusterID: m.clusterId,
 		},
 	}
 
-	byNodeName := map[string]*v3.Node{}
+	var result []*v3.Node
 
 	for nodes, err := m.nodes.List(listOpts); nodes != nil || err != nil; nodes, err = nodes.Next() {
 		if err != nil {
@@ -354,9 +364,29 @@ func (m *RancherManager) fetchAllNodesByNodeName() (map[string]*v3.Node, error) 
 		}
 
 		for i := range nodes.Data {
-			byNodeName[nodes.Data[i].NodeName] = &nodes.Data[i]
+			result = append(result, &nodes.Data[i])
 		}
 	}
 
-	return byNodeName, nil
+	return result, nil
+}
+
+func filterAllNodesByNodeName(nodes []*v3.Node) map[string]*v3.Node {
+	byNodeName := map[string]*v3.Node{}
+
+	for _, n := range nodes {
+		byNodeName[n.NodeName] = n
+	}
+
+	return byNodeName
+}
+
+func filterAllNodesByNodeID(nodes []*v3.Node) map[string]*v3.Node {
+	byNodeID := map[string]*v3.Node{}
+
+	for _, n := range nodes {
+		byNodeID[n.ID] = n
+	}
+
+	return byNodeID
 }
