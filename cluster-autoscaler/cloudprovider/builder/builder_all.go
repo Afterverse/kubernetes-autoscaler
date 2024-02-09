@@ -1,5 +1,5 @@
-//go:build !gce && !aws && !azure && !kubemark && !alicloud && !magnum && !digitalocean && !clusterapi && !huaweicloud && !ionoscloud && !linode && !hetzner && !bizflycloud && !brightbox && !packet && !oci && !vultr && !tencentcloud
-// +build !gce,!aws,!azure,!kubemark,!alicloud,!magnum,!digitalocean,!clusterapi,!huaweicloud,!ionoscloud,!linode,!hetzner,!bizflycloud,!brightbox,!packet,!oci,!vultr,!tencentcloud
+//go:build !gce && !aws && !azure && !kubemark && !alicloud && !magnum && !digitalocean && !clusterapi && !huaweicloud && !ionoscloud && !linode && !hetzner && !bizflycloud && !brightbox && !packet && !oci && !vultr && !tencentcloud && !rancher
+// +build !gce,!aws,!azure,!kubemark,!alicloud,!magnum,!digitalocean,!clusterapi,!huaweicloud,!ionoscloud,!linode,!hetzner,!bizflycloud,!brightbox,!packet,!oci,!vultr,!tencentcloud,!rancher
 
 /*
 Copyright 2018 The Kubernetes Authors.
@@ -40,6 +40,7 @@ import (
 	"k8s.io/autoscaler/cluster-autoscaler/cloudprovider/oci"
 	"k8s.io/autoscaler/cluster-autoscaler/cloudprovider/ovhcloud"
 	"k8s.io/autoscaler/cluster-autoscaler/cloudprovider/packet"
+	"k8s.io/autoscaler/cluster-autoscaler/cloudprovider/rancher"
 	"k8s.io/autoscaler/cluster-autoscaler/cloudprovider/tencentcloud"
 	"k8s.io/autoscaler/cluster-autoscaler/cloudprovider/vultr"
 	"k8s.io/autoscaler/cluster-autoscaler/config"
@@ -68,10 +69,11 @@ var AvailableCloudProviders = []string{
 	cloudprovider.PacketProviderName,
 	cloudprovider.VultrProviderName,
 	cloudprovider.TencentcloudProviderName,
+	cloudprovider.RancherProviderName,
 }
 
-// DefaultCloudProvider is GCE.
-const DefaultCloudProvider = cloudprovider.GceProviderName
+// DefaultCloudProvider is Rancher.
+const DefaultCloudProvider = cloudprovider.RancherProviderName
 
 func buildCloudProvider(opts config.AutoscalingOptions, do cloudprovider.NodeGroupDiscoveryOptions, rl *cloudprovider.ResourceLimiter) cloudprovider.CloudProvider {
 	switch opts.CloudProviderName {
@@ -117,6 +119,8 @@ func buildCloudProvider(opts config.AutoscalingOptions, do cloudprovider.NodeGro
 		return vultr.BuildVultr(opts, do, rl)
 	case cloudprovider.TencentcloudProviderName:
 		return tencentcloud.BuildTencentcloud(opts, do, rl)
+	case cloudprovider.RancherProviderName:
+		return rancher.BuildRancher(opts, do, rl)
 	}
 	return nil
 }
